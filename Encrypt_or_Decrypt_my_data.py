@@ -130,7 +130,7 @@ def find_library(possible_lib_names, search_symbol, library_name):
         try:
             lib = CDLL(path)
             if hasattr(lib, search_symbol):
-#                 print('loading %s from %s' % (library_name, path))
+                print('[ loading %s from %s ]\n' % (library_name, path))
                 return lib
             else:
                 print('can\'t find symbol %s in %s', search_symbol, path)
@@ -145,6 +145,8 @@ def load_openssl():
                                   'EVP_get_cipherbyname',
                                   'libcrypto')
     if libcrypto is None:
+        if os.name == "nt":
+            print("\nSorry needed lib not found.. You can get it from here. [http://slproweb.com/products/Win32OpenSSL.html]\n")
         raise Exception('libcrypto(OpenSSL) not found')
 
     libcrypto.EVP_get_cipherbyname.restype = c_void_p
@@ -177,8 +179,6 @@ def load_cipher(cipher_name):
 class OpenSSLCrypto(object):
     def __init__(self, cipher_name, key, iv, op):
         self._ctx = None
-        if not loaded:
-            load_openssl()
         cipher_name = str(cipher_name)
         cipher = libcrypto.EVP_get_cipherbyname(cipher_name)
         if not cipher:
@@ -332,8 +332,6 @@ class Encryptor(object):
 
 class SodiumCrypto(object):
     def __init__(self, cipher_name, key, iv, op):
-        if not loaded:
-            load_libsodium()
         self.key = key
         self.iv = iv
         self.key_ptr = c_char_p(key)
@@ -555,45 +553,52 @@ if __name__ == '__main__':
     my_queue = Queue.Queue()
     result_dic = {}
     result_dic['method'] = method
-      
-    if os.path.isdir(the_deal_path):            
-        os.chdir(the_deal_path)
-        if choice == "encrypt":
-            all_encrypt_files = [f for f in glob.glob("*") if "locked" not in f]
-            for i in range(len(all_encrypt_files)):
-                t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
-                t.setDaemon(True)
-                t.start()
-            result_dic['direction'] = 'encrypt'            
-            for one_file in all_encrypt_files:
-                my_queue.put(one_file)
-        elif choice == "decrypt":
-            all_decrypt_files = [f for f in glob.glob("*.locked")]
-            for i in range(len(all_decrypt_files)):
-                t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
-                t.setDaemon(True)
-                t.start()
-            result_dic['direction'] = 'decrypt'       
-            for one_file in all_decrypt_files:
-                my_queue.put(one_file)
-        my_queue.join()
-    elif os.path.isfile(the_deal_path):
-        thread_num = 1
-        if choice == "encrypt":
-            for i in range(thread_num):
-                t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
-                t.setDaemon(True)
-                t.start()    
-            result_dic['direction'] = 'encrypt'
-            my_queue.put(the_deal_path)       
-        elif choice == "decrypt":
-            for i in range(thread_num):
-                t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
-                t.setDaemon(True)
-                t.start()
-            result_dic['direction'] = 'decrypt'
-            my_queue.put(the_deal_path)
-        my_queue.join()
-    print_json(result_dic)
-    open("%s%sEncrypt_or_Decrypt_my_data.log" % (os.path.split(os.path.abspath(__file__))[0],os.sep),'a+').write("%s\n-------------------------%s-----------------------\n\n"\
-                                                       % (json.dumps(result_dic,indent=4,ensure_ascii=False,sort_keys=True),time.strftime("%Y-%m-%d %H:%M:%S")))
+    try:
+        if method in ["salsa20","chacha20"] and not loaded:
+            load_libsodium()        
+        elif method not in ['table'] and not loaded:
+            load_openssl()
+        if os.path.isdir(the_deal_path):            
+            os.chdir(the_deal_path)
+            if choice == "encrypt":
+                all_encrypt_files = [f for f in glob.glob("*") if "locked" not in f]
+                for i in range(len(all_encrypt_files)):
+                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    t.setDaemon(True)
+                    t.start()
+                result_dic['direction'] = 'encrypt'            
+                for one_file in all_encrypt_files:
+                    my_queue.put(one_file)
+            elif choice == "decrypt":
+                all_decrypt_files = [f for f in glob.glob("*.locked")]
+                for i in range(len(all_decrypt_files)):
+                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    t.setDaemon(True)
+                    t.start()
+                result_dic['direction'] = 'decrypt'       
+                for one_file in all_decrypt_files:
+                    my_queue.put(one_file)
+            my_queue.join()
+        elif os.path.isfile(the_deal_path):
+            thread_num = 1
+            if choice == "encrypt":
+                for i in range(thread_num):
+                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    t.setDaemon(True)
+                    t.start()    
+                result_dic['direction'] = 'encrypt'
+                my_queue.put(the_deal_path)       
+            elif choice == "decrypt":
+                for i in range(thread_num):
+                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    t.setDaemon(True)
+                    t.start()
+                result_dic['direction'] = 'decrypt'
+                my_queue.put(the_deal_path)
+            my_queue.join()
+        print_json(result_dic)
+        open("%s%sEncrypt_or_Decrypt_my_data.log" % (os.path.split(os.path.abspath(__file__))[0],os.sep),'a+').write("%s\n-------------------------%s-----------------------\n\n"\
+                                                           % (json.dumps(result_dic,indent=4,ensure_ascii=False,sort_keys=True),time.strftime("%Y-%m-%d %H:%M:%S")))
+    except Exception as e:
+        print("ERROR INFO: %s" % str(e))
+        sys.exit()
