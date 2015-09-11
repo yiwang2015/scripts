@@ -14,13 +14,14 @@ import shutil
 import threading
 import Queue
 import time
+import zipfile
 # from cryptography.hazmat.primitives.ciphers.base import Cipher
 # import openssl
 # import socket
 
 #---------------------------------------------------------
 #Please change here with your own key and method (methods all in the list all_method_can_use below)
-method = "aes-128-cfb"
+method = "aes-256-cfb"
 key = "password"
 #---------------------------------------------------------
 
@@ -43,6 +44,7 @@ BLOCK_SIZE = 64
 cached_tables = {}
 the_deal_path = ""
 choice = ""
+dir_as_one_file = False
 
 if hasattr(string, 'maketrans'):
     maketrans = string.maketrans
@@ -53,10 +55,12 @@ else:
 
 
 def print_help():
-    print('''Usage:\n\n %s [OPTION] "The file or dir path"
+    print('''Usage:\n\n %s [OPTION] "The file or dir path"  [--dir_as_one_file]
 
-  -d        Decrypt
-  -e        Encrypt
+  -d                    Decrypt
+  -e                    Encrypt
+  
+  --dir_as_one_file     will make a zip from the given dir and encrypt the whole zip file
 ''' % sys.argv[0])
     sys.exit()
 
@@ -137,6 +141,23 @@ def find_library(possible_lib_names, search_symbol, library_name):
         except Exception:
             pass
     return None
+
+def get_the_zip_path_for_dir(source_dir_path):
+    cwd_path = os.getcwd()
+    os.chdir(os.path.split(source_dir_path)[0])
+    dest_zip_file_path = "%s%s%s.zip" % (os.path.split(source_dir_path)[0],os.sep,os.path.split(source_dir_path)[1])
+    zipf = zipfile.ZipFile("%s" % dest_zip_file_path,"w")
+    for root, dirs, files in os.walk(os.path.split(source_dir_path)[1]):                
+        for file in files:
+#             print(os.path.join(root,file))
+#             time.sleep(1)
+            zipf.write(os.path.join(root,file))
+#             print("root:%s file:%s" % (root,file))
+#             print(os.path.join(root.replace(r"%s" % source_dir_path,""),file))
+#             print(r"%s" % source_dir_path)
+    os.chdir(cwd_path)
+    return dest_zip_file_path
+
 
 def load_openssl():
     global loaded, libcrypto, buf
@@ -225,7 +246,7 @@ def create_cipher(alg, key, iv, op, key_as_bytes=0, d=None, salt=None,
     return openssl.OpenSSLCrypto(b'rc4', rc4_key, b'', op)
 
 def get_config():
-    global the_deal_path,choice
+    global the_deal_path,choice,dir_as_one_file
     if sys.argv[1] == "-d":
         choice = "decrypt"
     elif sys.argv[1] == "-e":
@@ -240,6 +261,10 @@ def get_config():
     if os.path.isfile(the_deal_path) != True and os.path.isdir(the_deal_path) != True:
         print("Sorry.. You must give me a path to a file or dir! EXIT now")
         sys.exit()
+    
+    if len(sys.argv) == 4 and str(sys.argv[3]) == "--dir_as_one_file":
+        dir_as_one_file = True
+        
 
 def load_libsodium():
     global loaded, libsodium, buf
@@ -541,7 +566,7 @@ def test_chacha20():
 
 
 if __name__ == '__main__':    
-    if len(sys.argv) != 3:
+    if len(sys.argv) not in [3,4]:
         print_help()
 
     #check the method if nt not support salsa20 and chacha20 on some win system; eg: win7
@@ -554,6 +579,8 @@ if __name__ == '__main__':
     result_dic = {}
     result_dic['method'] = method
     try:
+        if dir_as_one_file:
+            the_deal_path = get_the_zip_path_for_dir(the_deal_path)
         if method in ["salsa20","chacha20"] and not loaded:
             load_libsodium()        
         elif method not in ['table'] and not loaded:
@@ -582,6 +609,8 @@ if __name__ == '__main__':
         elif os.path.isfile(the_deal_path):
             thread_num = 1
             if choice == "encrypt":
+                if "locked" in the_deal_path:
+                    raise Exception("The file has been locked.. %s" % the_deal_path)                
                 for i in range(thread_num):
                     t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
                     t.setDaemon(True)
