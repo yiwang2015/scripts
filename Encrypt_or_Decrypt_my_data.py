@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*-
 
 from __future__ import absolute_import, division, print_function,  with_statement
 import sys,os
@@ -421,10 +422,10 @@ class TableCipher(object):
 
 def print_json(json_obj,indent_=4):
     print('-' * 50)
-    print(json.dumps(json_obj,indent=indent_,ensure_ascii=True,sort_keys=True))
+    print(json.dumps(json_obj,indent=indent_,ensure_ascii=False,sort_keys=True))
     print('-' * 60)
 
-class do_encrypt_or_decrypt(threading.Thread):
+class do_encrypt_or_decrypt_linux(threading.Thread):
 
     def __init__(self,queue,response_dic,id,key_password,method,choice):
         threading.Thread.__init__(self)
@@ -486,6 +487,72 @@ class do_encrypt_or_decrypt(threading.Thread):
         end_time = time.time()
         self.response_dic['%s' % self.id]['time_used'] = int(end_time) - int(begin_time)
         self.queue.task_done()
+
+
+class do_encrypt_or_decrypt_win(threading.Thread):
+
+    def __init__(self,queue,response_dic,id,key_password,method,choice):
+        threading.Thread.__init__(self)
+        self.queue = queue
+        self.response_dic = response_dic
+        self.id = id
+        self.key = key_password
+        self.method = method
+        self.choice = choice
+        self.response_dic['%s' % self.id] = {}
+        
+    def run(self):
+        i = self.queue.get()
+        begin_time = time.time()
+        if self.method in ["table"]:
+            if self.choice == "encrypt":
+                cipher_obj = TableCipher(self.method,self.key,random_string(method_supported[self.method][1]),1)
+                encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+                open("%s.locked" % i,'wb+').write(encrypted_data)
+                self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
+                self.response_dic['%s' % self.id]['after'] = "%s.locked" % i.decode("GB2312").encode("utf-8")                
+            elif self.choice == "decrypt":
+                cipher_obj = TableCipher(self.method,self.key,random_string(method_supported[self.method][1]),0)
+                decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
+                self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","").decode("GB2312").encode("utf-8")
+            else:
+                print("Sorry 1")
+                sys.exit()
+        elif self.method in ["salsa20","chacha20"]:
+            if self.choice == "encrypt":
+                cipher_obj = SodiumCrypto(self.method,self.key,random_string(method_supported[self.method][1]),1)
+                encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+                open("%s.locked" % i,'wb+').write(encrypted_data)
+                self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
+                self.response_dic['%s' % self.id]['after'] = "%s.locked" % i.decode("GB2312").encode("utf-8")
+            elif self.choice == "decrypt":
+                cipher_obj = SodiumCrypto(self.method,self.key,random_string(method_supported[self.method][1]),0)
+                decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
+                self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","").decode("GB2312").encode("utf-8")
+            else:
+                print("Sorry 2")
+                sys.exit()            
+        else:
+            cipher_obj = Encryptor(self.key,self.method)
+            if self.choice == "encrypt":
+                print(i.decode("GB2312").encode("utf-8"))
+                encrypted_data = cipher_obj.encrypt(open("%s" % i,'rb').read())
+                open("%s.locked" % i,'wb+').write(encrypted_data)
+                self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
+                self.response_dic['%s' % self.id]['after'] = "%s.locked" % i.decode("GB2312").encode("utf-8")
+            elif self.choice == "decrypt":
+                decrypted_data = cipher_obj.decrypt(open("%s" % i,'rb').read())
+                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
+                self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","").decode("GB2312").encode("utf-8")
+        end_time = time.time()
+        self.response_dic['%s' % self.id]['time_used'] = int(end_time) - int(begin_time)
+        self.queue.task_done()
+
 
 method_supported = {
     'aes-128-cfb': (16, 16, OpenSSLCrypto),
@@ -588,9 +655,12 @@ if __name__ == '__main__':
         if os.path.isdir(the_deal_path):            
             os.chdir(the_deal_path)
             if choice == "encrypt":
-                all_encrypt_files = [f for f in glob.glob("*") if "locked" not in f]
+                all_encrypt_files = [f for f in glob.glob("*") if "locked" not in f and os.path.isfile(f)]
                 for i in range(len(all_encrypt_files)):
-                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    if os.name == 'nt':
+                        t = do_encrypt_or_decrypt_win(my_queue,result_dic,i,key,method,choice)
+                    elif os.name == "posix":
+                        t = do_encrypt_or_decrypt_linux(my_queue,result_dic,i,key,method,choice)
                     t.setDaemon(True)
                     t.start()
                 result_dic['direction'] = 'encrypt'            
@@ -599,7 +669,10 @@ if __name__ == '__main__':
             elif choice == "decrypt":
                 all_decrypt_files = [f for f in glob.glob("*.locked")]
                 for i in range(len(all_decrypt_files)):
-                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    if os.name == 'nt':
+                        t = do_encrypt_or_decrypt_win(my_queue,result_dic,i,key,method,choice)
+                    elif os.name == "posix":
+                        t = do_encrypt_or_decrypt_linux(my_queue,result_dic,i,key,method,choice)
                     t.setDaemon(True)
                     t.start()
                 result_dic['direction'] = 'decrypt'       
@@ -612,14 +685,20 @@ if __name__ == '__main__':
                 if "locked" in the_deal_path:
                     raise Exception("The file has been locked.. %s" % the_deal_path)                
                 for i in range(thread_num):
-                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    if os.name == 'nt':
+                        t = do_encrypt_or_decrypt_win(my_queue,result_dic,i,key,method,choice)
+                    elif os.name == "posix":
+                        t = do_encrypt_or_decrypt_linux(my_queue,result_dic,i,key,method,choice)
                     t.setDaemon(True)
                     t.start()    
                 result_dic['direction'] = 'encrypt'
                 my_queue.put(the_deal_path)       
             elif choice == "decrypt":
                 for i in range(thread_num):
-                    t = do_encrypt_or_decrypt(my_queue,result_dic,i,key,method,choice)
+                    if os.name == 'nt':
+                        t = do_encrypt_or_decrypt_win(my_queue,result_dic,i,key,method,choice)
+                    elif os.name == "posix":
+                        t = do_encrypt_or_decrypt_linux(my_queue,result_dic,i,key,method,choice)
                     t.setDaemon(True)
                     t.start()
                 result_dic['direction'] = 'decrypt'
