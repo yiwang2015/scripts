@@ -37,7 +37,8 @@ libcrypto = None
 loaded = False
 libsodium = None
 
-buf_size = 2048
+buf_size = 1024 * 1024 * 2
+data_size_in_e_or_d = 1024 * 1024
 
 # for salsa20 and chacha20
 BLOCK_SIZE = 64
@@ -225,6 +226,7 @@ class OpenSSLCrypto(object):
         if buf_size < l:
             buf_size = l * 2
             buf = create_string_buffer(buf_size)
+        buf = create_string_buffer(buf_size)
         libcrypto.EVP_CipherUpdate(self._ctx, byref(buf),
                                    byref(cipher_out_len), c_char_p(data), l)
         # buf is copied to a str object when we access buf.raw
@@ -443,14 +445,30 @@ class do_encrypt_or_decrypt_linux(threading.Thread):
         if self.method in ["table"]:
             if self.choice == "encrypt":
                 cipher_obj = TableCipher(self.method,self.key,random_string(method_supported[self.method][1]),1)
-                encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s.locked" % i,'wb+').write(encrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    encrypted_data = cipher_obj.update(chunk_data)
+                    open("%s.locked" % i,'ab+').write(encrypted_data)
+                opend_f.close()
+#               encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s.locked" % i,'wb+').write(encrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i
                 self.response_dic['%s' % self.id]['after'] = "%s.locked" % i                
             elif self.choice == "decrypt":
                 cipher_obj = TableCipher(self.method,self.key,random_string(method_supported[self.method][1]),0)
-                decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    decrypted_data = cipher_obj.update(chunk_data)
+                    open("%s" % i.replace(".locked",""),'ab+').write(decrypted_data)
+                opend_f.close()
+#               decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i
                 self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","")                         
             else:
@@ -459,14 +477,30 @@ class do_encrypt_or_decrypt_linux(threading.Thread):
         elif self.method in ["salsa20","chacha20"]:
             if self.choice == "encrypt":
                 cipher_obj = SodiumCrypto(self.method,self.key,random_string(method_supported[self.method][1]),1)
-                encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s.locked" % i,'wb+').write(encrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    encrypted_data = cipher_obj.update(chunk_data)
+                    open("%s.locked" % i,'ab+').write(encrypted_data)
+                opend_f.close()
+#               encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s.locked" % i,'wb+').write(encrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i
                 self.response_dic['%s' % self.id]['after'] = "%s.locked" % i                
             elif self.choice == "decrypt":
                 cipher_obj = SodiumCrypto(self.method,self.key,random_string(method_supported[self.method][1]),0)
-                decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    decrypted_data = cipher_obj.update(chunk_data)
+                    open("%s" % i.replace(".locked",""),'ab+').write(decrypted_data)
+                opend_f.close()
+#               decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i
                 self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","")                         
             else:
@@ -475,13 +509,25 @@ class do_encrypt_or_decrypt_linux(threading.Thread):
         else:
             cipher_obj = Encryptor(self.key,self.method)
             if self.choice == "encrypt":
-                encrypted_data = cipher_obj.encrypt(open("%s" % i,'rb').read())
-                open("%s.locked" % i,'wb+').write(encrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    encrypted_data = cipher_obj.encrypt(chunk_data)
+                    open("%s.locked" % i,'ab+').write(encrypted_data)
+                opend_f.close()
                 self.response_dic['%s' % self.id]['before'] = "%s" % i
                 self.response_dic['%s' % self.id]['after'] = "%s.locked" % i
             elif self.choice == "decrypt":
-                decrypted_data = cipher_obj.decrypt(open("%s" % i,'rb').read())
-                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    decrypted_data = cipher_obj.decrypt(chunk_data)
+                    open("%s" % i.replace(".locked",""),'ab+').write(decrypted_data)
+                opend_f.close()
                 self.response_dic['%s' % self.id]['before'] = "%s" % i
                 self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","")
         end_time = time.time()
@@ -507,14 +553,30 @@ class do_encrypt_or_decrypt_win(threading.Thread):
         if self.method in ["table"]:
             if self.choice == "encrypt":
                 cipher_obj = TableCipher(self.method,self.key,random_string(method_supported[self.method][1]),1)
-                encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s.locked" % i,'wb+').write(encrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    encrypted_data = cipher_obj.update(chunk_data)
+                    open("%s.locked" % i,'ab+').write(encrypted_data)
+                opend_f.close()
+#               encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s.locked" % i,'wb+').write(encrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
                 self.response_dic['%s' % self.id]['after'] = "%s.locked" % i.decode("GB2312").encode("utf-8")                
             elif self.choice == "decrypt":
                 cipher_obj = TableCipher(self.method,self.key,random_string(method_supported[self.method][1]),0)
-                decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    decrypted_data = cipher_obj.update(chunk_data)
+                    open("%s" % i.replace(".locked",""),'ab+').write(decrypted_data)
+                opend_f.close()
+#               decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
                 self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","").decode("GB2312").encode("utf-8")
             else:
@@ -523,14 +585,30 @@ class do_encrypt_or_decrypt_win(threading.Thread):
         elif self.method in ["salsa20","chacha20"]:
             if self.choice == "encrypt":
                 cipher_obj = SodiumCrypto(self.method,self.key,random_string(method_supported[self.method][1]),1)
-                encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s.locked" % i,'wb+').write(encrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    encrypted_data = cipher_obj.update(chunk_data)
+                    open("%s.locked" % i,'ab+').write(encrypted_data)
+                opend_f.close()
+#               encrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s.locked" % i,'wb+').write(encrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
                 self.response_dic['%s' % self.id]['after'] = "%s.locked" % i.decode("GB2312").encode("utf-8")
             elif self.choice == "decrypt":
                 cipher_obj = SodiumCrypto(self.method,self.key,random_string(method_supported[self.method][1]),0)
-                decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
-                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    decrypted_data = cipher_obj.update(chunk_data)
+                    open("%s" % i.replace(".locked",""),'ab+').write(decrypted_data)
+                opend_f.close()
+#               decrypted_data = cipher_obj.update(open("%s" % i,'rb').read())
+#               open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
                 self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","").decode("GB2312").encode("utf-8")
             else:
@@ -540,13 +618,29 @@ class do_encrypt_or_decrypt_win(threading.Thread):
             cipher_obj = Encryptor(self.key,self.method)
             if self.choice == "encrypt":
                 print(i.decode("GB2312").encode("utf-8"))
-                encrypted_data = cipher_obj.encrypt(open("%s" % i,'rb').read())
-                open("%s.locked" % i,'wb+').write(encrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    encrypted_data = cipher_obj.encrypt(chunk_data)
+                    open("%s.locked" % i,'ab+').write(encrypted_data)
+                opend_f.close()
+#               encrypted_data = cipher_obj.encrypt(open("%s" % i,'rb').read())
+#               open("%s.locked" % i,'wb+').write(encrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
                 self.response_dic['%s' % self.id]['after'] = "%s.locked" % i.decode("GB2312").encode("utf-8")
             elif self.choice == "decrypt":
-                decrypted_data = cipher_obj.decrypt(open("%s" % i,'rb').read())
-                open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
+                opend_f = open("%s" % i,'rb')
+                while True:
+                    chunk_data = opend_f.read(data_size_in_e_or_d)
+                    if not chunk_data:
+                        break
+                    decrypted_data = cipher_obj.decrypt(chunk_data)
+                    open("%s" % i.replace(".locked",""),'ab+').write(decrypted_data)
+                opend_f.close()
+#               decrypted_data = cipher_obj.decrypt(open("%s" % i,'rb').read())
+#               open("%s" % i.replace(".locked",""),'wb+').write(decrypted_data)
                 self.response_dic['%s' % self.id]['before'] = "%s" % i.decode("GB2312").encode("utf-8")
                 self.response_dic['%s' % self.id]['after'] = "%s" % i.replace(".locked","").decode("GB2312").encode("utf-8")
         end_time = time.time()
