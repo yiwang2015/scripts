@@ -431,12 +431,33 @@ def split_list(list_tmp,N):
 		new_list.append(list_tmp[N_1*N:])
 	return new_list
 
+def a_list_of_date(given_date,months_num):
+	year = int(str(given_date).strip().split('-')[0])
+	month = int(str(given_date).strip().split('-')[1])
+	out_list = []
+	date1 = datetime.date(year,month,1)
+	for i in range(int(months_num)):
+		date2 = date1 - datetime.timedelta(days=1)
+		out_list.append(date2.strftime("%Y-%m"))
+		date1 = datetime.date(int(out_list[-1].split('-')[0]),int(out_list[-1].split('-')[1]),1)
+	return out_list
+
+
 
 
 #################################################################################
 
 
 if __name__ == '__main__':
+	#a_list_of_date('2016-1',24)
+	#print get_monday_to_sunday()
+	#print get_this_month_first_day_to_last()
+	#aa = get_this_month_first_day_to_last()[0].strftime("%Y-%m")
+	#bb = a_list_of_date(aa,24)
+	#bb.reverse()
+	#print bb
+
+	#sys.exit()
 	#t_1 = (('1',0,123),(123,list("123"),133))
 	#print t_1
 	#print t_to_l(t_1)
