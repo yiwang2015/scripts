@@ -6,6 +6,7 @@ from matplotlib.mlab import csv2rec
 from matplotlib.cbook import get_sample_data
 import json
 import functions as func
+import sys,os
 from pylab import *
 
 #mpl.rcParams['font.sans-serif'] = ['simhei']
@@ -51,11 +52,11 @@ plt.ylim(1000, 50000)
 plt.xticks(range(0, 24, 1), fontsize=14)
 # plt.yticks(range(0, 91, 10), ['{0}%'.format(x)
 #								for x in range(0, 91, 10)], fontsize=14)
-plt.yticks(range(1000, 50000, 1000), fontsize=14)
+plt.yticks(range(1000, 50000, 1500), fontsize=14)
 # Provide tick lines across the plot to help your viewers trace along
 # the axis ticks. Make sure that the lines are light and small so they
 # don't obscure the primary data lines.
-for y in range(1000, 50000, 1000):
+for y in range(1000, 50000, 1500):
 	plt.plot(range(0, 24, 1), [y] * len(range(0, 24, 1)), '--',
 			 lw=0.5, color='black', alpha=0.3)
 
@@ -73,12 +74,28 @@ majors = ['Health Professions', 'Public Administration', 'Education',
 		  'Math and Statistics', 'Architecture', 'Physical Sciences',
 		  'Computer Science', 'Engineering']
 
+cities = ["北京","上海","广州","深圳","昆明","杭州","苏州","厦门","南京","西安","珠海","惠州"]
+
+majors = []
+for ti in cities:
+	majors.append("%s_二手房" % ti)
+	majors.append("%s_新房" % ti)
+
 y_offsets = {'Foreign Languages': 0.5, 'English': -0.5,
 			 'Communications\nand Journalism': 0.75,
 			 'Art and Performance': -0.25, 'Agriculture': 1.25,
 			 'Social Sciences and History': 0.25, 'Business': -0.75,
 			 'Math and Statistics': 0.75, 'Architecture': -0.75,
 			 'Computer Science': 0.75, 'Engineering': -0.25}
+
+y_offsets = {u'北京_新房': 500, u"上海_二手房":-500, u"杭州_二手房":-100,u"广州_二手房":500,u"苏州_二手房":100,u"南京_二手房":-500,u"珠海_新房":-300,u"珠海_二手房":-800,u"昆明_二手房":400,u"昆明_新房":250,u"惠州_新房":-200,u"西安_二手房":-500,u"西安_新房":-500,u"惠州_二手房":-1000,u"苏州_新房":-1200}
+
+print len(y_offsets)
+print len(majors)
+print len(cities)
+print len(color_sequence)
+
+#sys.exit()
 
 #func.a_list_of_date(func.get_this)
 cc = func.get_this_month_first_day_to_last()[0].strftime("%Y-%m")
@@ -96,10 +113,10 @@ for rank, column in enumerate(aa.keys()):
 
 	# Add a text label to the right end of every line. Most of the code below
 	# is adding specific offsets y position because some labels overlapped.
-	y_pos = aa[column]['new'][-1]
+	y_pos = int(aa[column]['new'][-1])
 
-#	  if column in y_offsets:
-#		  y_pos += y_offsets[column]
+	if u"%s_新房" % column in y_offsets:
+		  y_pos += y_offsets[u"%s_新房" % column]
 
 	# Again, make sure that all labels are large enough to be easily read
 	# by the viewer.
@@ -110,18 +127,18 @@ for rank, column in enumerate(aa.keys()):
 	line = plt.plot([ft for ft in range(24)],
 					aa[column]['second'],
 					lw=2.5,
-					color=color_sequence[-rank])
+					color=color_sequence[-(rank+1)])
 
 	# Add a text label to the right end of every line. Most of the code below
 	# is adding specific offsets y position because some labels overlapped.
-	y_pos = aa[column]['second'][-1]
+	y_pos = int(aa[column]['second'][-1])
 
-#	  if column in y_offsets:
-#		  y_pos += y_offsets[column]
+	if u"%s_二手房" % column in y_offsets:
+		  y_pos += y_offsets[u"%s_二手房" % column]
 
 	# Again, make sure that all labels are large enough to be easily read
 	# by the viewer.
-	plt.text(24, y_pos, "%s_%s" % (column,u"二手房"), fontsize=10, color=color_sequence[-rank],fontproperties=myfont)
+	plt.text(24, y_pos, "%s_%s" % (column,u"二手房"), fontsize=10, color=color_sequence[-(rank+1)],fontproperties=myfont)
 
 # Make the title big enough so it spans the entire plot, but don't make it
 # so big that it requires two lines to show.
