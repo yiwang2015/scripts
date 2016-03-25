@@ -74,7 +74,7 @@ majors = ['Health Professions', 'Public Administration', 'Education',
 		  'Math and Statistics', 'Architecture', 'Physical Sciences',
 		  'Computer Science', 'Engineering']
 
-cities = ["北京","上海","广州","深圳","昆明","杭州","苏州","厦门","南京","西安","珠海","惠州"]
+cities = ["北京","上海","广州","深圳","昆明","杭州","苏州","厦门","南京","西安","珠海","惠州","长沙","武汉","三亚"]
 
 majors = []
 for ti in cities:
@@ -88,7 +88,7 @@ y_offsets = {'Foreign Languages': 0.5, 'English': -0.5,
 			 'Math and Statistics': 0.75, 'Architecture': -0.75,
 			 'Computer Science': 0.75, 'Engineering': -0.25}
 
-y_offsets = {u'北京_新房': 500, u"上海_二手房":-500, u"杭州_二手房":-100,u"广州_二手房":500,u"苏州_二手房":100,u"南京_二手房":-500,u"珠海_新房":-300,u"珠海_二手房":-800,u"昆明_二手房":400,u"昆明_新房":250,u"惠州_新房":-200,u"西安_二手房":-500,u"西安_新房":-500,u"惠州_二手房":-1100,u"苏州_新房":-1200}
+y_offsets = {u'北京_新房': 500, u"上海_二手房":-500, u"杭州_二手房":-100,u"广州_二手房":500,u"苏州_二手房":100,u"南京_二手房":-770,u"珠海_新房":-300,u"珠海_二手房":-800,u"昆明_二手房":400,u"昆明_新房":350,u"惠州_新房":-10,u"西安_二手房":-1200,u"西安_新房":-1100,u"惠州_二手房":-1700,u"苏州_新房":-1200,u"南京_二手房":-800,u"长沙_二手房":50,"长沙_新房":10}
 
 print len(y_offsets)
 print len(majors)
