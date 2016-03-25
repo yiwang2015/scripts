@@ -88,7 +88,7 @@ y_offsets = {'Foreign Languages': 0.5, 'English': -0.5,
 			 'Math and Statistics': 0.75, 'Architecture': -0.75,
 			 'Computer Science': 0.75, 'Engineering': -0.25}
 
-y_offsets = {u'北京_新房': 500, u"上海_二手房":-500, u"杭州_二手房":-100,u"广州_二手房":500,u"苏州_二手房":100,u"南京_二手房":-500,u"珠海_新房":-300,u"珠海_二手房":-800,u"昆明_二手房":400,u"昆明_新房":250,u"惠州_新房":-200,u"西安_二手房":-500,u"西安_新房":-500,u"惠州_二手房":-1000,u"苏州_新房":-1200}
+y_offsets = {u'北京_新房': 500, u"上海_二手房":-500, u"杭州_二手房":-100,u"广州_二手房":500,u"苏州_二手房":100,u"南京_二手房":-500,u"珠海_新房":-300,u"珠海_二手房":-800,u"昆明_二手房":400,u"昆明_新房":250,u"惠州_新房":-200,u"西安_二手房":-500,u"西安_新房":-500,u"惠州_二手房":-1100,u"苏州_新房":-1200}
 
 print len(y_offsets)
 print len(majors)
@@ -120,7 +120,7 @@ for rank, column in enumerate(aa.keys()):
 
 	# Again, make sure that all labels are large enough to be easily read
 	# by the viewer.
-	plt.text(24, y_pos, "%s_%s" % (column,u"新房"), fontsize=10, color=color_sequence[rank],fontproperties=myfont)
+	plt.text(24, y_pos, "%s_%s" % (column,u"新房"), fontsize=9, color=color_sequence[rank],fontproperties=myfont)
 	# Plot each line separately with its own color.
 #	  column_rec_name = column.replace('\n', '_').replace(' ', '_').lower()
 
@@ -138,7 +138,7 @@ for rank, column in enumerate(aa.keys()):
 
 	# Again, make sure that all labels are large enough to be easily read
 	# by the viewer.
-	plt.text(24, y_pos, "%s_%s" % (column,u"二手房"), fontsize=10, color=color_sequence[-(rank+1)],fontproperties=myfont)
+	plt.text(24, y_pos, "%s_%s" % (column,u"二手房"), fontsize=9, color=color_sequence[-(rank+1)],fontproperties=myfont)
 
 # Make the title big enough so it spans the entire plot, but don't make it
 # so big that it requires two lines to show.
