@@ -450,54 +450,38 @@ def run_shell_command(command_string):
 	out,err = p.communicate()
 	return (p.returncode,out.rstrip(),err.rstrip())
 
+def is_valid_ip(ip_string):
+	try:
+		parts = ip_string.split('.')
+		return len(parts) == 4 and all(0 <= int(part) < 256 for part in parts)
+	except ValueError:
+		return False # one of the 'parts' not convertible to integer
+	except (AttributeError, TypeError):
+		return False # `ip` isn't even a string
+
+
+def get_all_ip_from_string(string):
+	ret = []
+	import re
+	ipPattern = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+	aab = re.findall(ipPattern,string)
+	for ip in aab:
+		if is_valid_ip(ip):
+			ret.append(ip)
+	return ret
+
+def get_all_ip_from_string_with_uniq_result(string):
+	ret = []
+	import re
+	ipPattern = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+	aab = re.findall(ipPattern,string)
+	for ip in aab:
+		if is_valid_ip(ip):
+			ret.append(ip)
+	return list(set(ret))
 
 #################################################################################
 
 
 if __name__ == '__main__':
-	#a_list_of_date('2016-1',24)
-	#print get_monday_to_sunday()
-	#print get_this_month_first_day_to_last()
-	#aa = get_this_month_first_day_to_last()[0].strftime("%Y-%m")
-	#bb = a_list_of_date(aa,24)
-	#bb.reverse()
-	#print bb
-
-	#sys.exit()
-	#t_1 = (('1',0,123),(123,list("123"),133))
-	#print t_1
-	#print t_to_l(t_1)
-	#a,b = get_the_24_hour_format_for_mysql_query()
-	#print get_the_one_date(5,'-')
-	#print get_the_one_date(5,'+')
-	#print get_ip_from_domain("www.baidu.com")
-	#print get_ip_location("202.106.235.15")
-	#print get_ip_location("%s" % get_ip_from_domain("www.baidu.com"))
-	#print get_the_time_now("begin")
-	#print SendSmsToTib(1,"我 love 你 1.0")
-	#print SendSmsToTib(2,"我 love 你 2.0")
-	#api_url_1 = '''http://mms.zydxqf.cn/WebAPI/SmsAPI.asmx/SendSms?user=ryrjr&pwd=654321&mobiles=18682150258&contents=replace_here'''
-	#api_url_2 = '''http://mms.zydxqf.cn/WebAPI/SmsAPI.asmx/SendSms?user=ryryzm&pwd=461670&mobiles=18682150258&contents=replace_here'''
-	#a = urllib2.urlopen(api_url_1.replace("replace_here","hello"))
-	#print a.getcode()
-	#pic_list = ["/tmp/1.jpg","/tmp/test.jpg"]
-	#att_list = ["/tmp/att.1","/tmp/att.2"]
-	#pic_list = ['jpg']
-	#att_list = ['1']
-	#att_list.extend(pic_list)
-	#print type(pic_list)
-	#print type(att_list)
-	#print att_list
-	#f = open("/tmp/help.html","r")
-	#mail_content = f.read()
-	#f.close()
-	##print "Hello Nothing.."
-	#send_mail_with_all(mailto_list,"from funcs py",html_content=mail_content,att=pic_list + att_list)
-	#print get_ip_location("182.147.55.230")
-	#print get_the_24_hour_format_for_mysql_query()
 	a = "2.3.4.5"
-	#re_str = '''((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)'''
-	#re_str1 = '''((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)'''
-	#re_str3 = '''(2[0-4]\d|25[0-5]|[01]?\d\d?\.){1,3}'''
-	#print get_match_substr_from_str(a,re_str3)
-	#print run_shell_command("ls /tmp/3")
