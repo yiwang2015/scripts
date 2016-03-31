@@ -443,6 +443,12 @@ def a_list_of_date(given_date,months_num):
 	return out_list
 
 
+def run_shell_command(command_string):
+	from subprocess import Popen,PIPE
+	cmd = "%s" % command_string.strip()
+	p = Popen(cmd,shell=True,stdout=PIPE,stderr=PIPE)
+	out,err = p.communicate()
+	return (p.returncode,out.rstrip(),err.rstrip())
 
 
 #################################################################################
@@ -490,7 +496,8 @@ if __name__ == '__main__':
 	#print get_ip_location("182.147.55.230")
 	#print get_the_24_hour_format_for_mysql_query()
 	a = "2.3.4.5"
-	re_str = '''((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)'''
-	re_str1 = '''((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)'''
-	re_str3 = '''(2[0-4]\d|25[0-5]|[01]?\d\d?\.){1,3}'''
-	print get_match_substr_from_str(a,re_str3)
+	#re_str = '''((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)'''
+	#re_str1 = '''((2[0-4]\d|25[0-5]|[01]?\d\d?)\.){3}(2[0-4]\d|25[0-5]|[01]?\d\d?)'''
+	#re_str3 = '''(2[0-4]\d|25[0-5]|[01]?\d\d?\.){1,3}'''
+	#print get_match_substr_from_str(a,re_str3)
+	#print run_shell_command("ls /tmp/3")
