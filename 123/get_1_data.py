@@ -100,7 +100,7 @@ def get_from_city_name(json_string):
 	return t_1['FromStr'].encode("UTF-8")
 
 def print_json(json_obj,indent_=4):
-	rint "-" * 50
+	print "-" * 50
 	print json.dumps(json_obj,indent=indent_,ensure_ascii=False,sort_keys=True)
 	print "-" * 60
 
